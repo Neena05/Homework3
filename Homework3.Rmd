@@ -1,0 +1,113 @@
+---
+title: "Homework3"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, results='hide', message=FALSE, warning=FALSE}
+# Load libraries
+library(tidyverse)
+library(colorfindr)
+library(ggplot2)
+```
+
+```{r}
+# Read in the data
+df = read.csv("homework3_data.csv")
+```
+
+
+# Color Palette Creation
+```{r}
+dat <- get_colors("acl_website.png")
+dat
+```
+
+```{r}
+plot_colors(dat[1:1000, ])
+```
+
+```{r}
+cols <- make_palette(dat[1:100, ])
+cols
+```
+
+
+# Part A- use at least 2 graphical presentations that support your recommendation
+
+## Five Number Summary Table
+```{r}
+df %>%
+  group_by(design) %>%
+  summarise(
+    Min = min(sales),
+    Q1 = quantile(sales, 0.25),
+    Median = median(sales),
+    Q3 = quantile(sales, 0.75),
+    Max = max(sales)
+  )
+```
+
+
+## Graphical Reprsentation 1
+
+```{r}
+ggplot(df, aes(x = factor(design), y = sales, fill = factor(design))) +
+  geom_boxplot(alpha = 0.7) +
+  scale_fill_manual(values = cols[1:2]) +
+  labs(x = "Design (0 = Old, 1 = New)", y = "Sales ($)", 
+       title = "Distribution of Sales by Web Design") +
+  theme_minimal()
+```
+
+
+## Graphical Reprsentation 2
+
+```{r}
+ggplot(df, aes(x = sales, fill = factor(design))) +
+  geom_density(alpha = 0.4) +
+  scale_fill_manual(values = c(cols[1], cols[10])) +
+  labs(x = "Sales ($)", y = "Density", 
+       title = "Sales Distribution by Web Design") +
+  theme_minimal()
+```
+
+
+# Part B - Estimate how much sales will increase/decrease if the redesign is done
+
+## T-Test
+```{r}
+t_test <- t.test(sales ~ design, data = df, 
+                 alternative = "greater", mu = 1.80, var.equal = TRUE)
+t_test
+```
+New design mean sales = $35.51
+Old design mean sales = $31.85
+Difference = +$3.66 per customer
+
+The t-test (unadjusted) did not find strong statistical evidence that the increase was > $1.80, likely because of how the test was set up relative to the null as p-value came out as 1.
+
+## Linear Regression
+```{r}
+model <- lm(sales ~ design + items, data = df)
+summary(model)
+```
+Redesign effect = +$2.52 per customer.
+
+The regression analysis (which adjusts for cart size) shows that the new design is linked to an average increase of \$2.52 per customer, statistically significant (p = 2.44e-08) and above the $1.80 requirement.
+
+# Part C- whether the redesign will lead to an average increase in sales of at least $1.80 per customer
+
+## Recommendation for the Company
+The two visuals show that the prior redesign resulted in an average increase in sales of more than $1.80 per customer.
+
+The regression results are more reliable because they account for customer behavior (items purchased). Based on this, the company has good evidence to proceed with the redesign, as it likely boosts sales above the target threshold of $1.80.
+
+# Primary and Alternative Statements
+
+Based on the historical data, the redesign is likely to increase average sales per customer by approximately \$2.50, which exceeds the company’s required threshold of \$1.80. Therefore, the evidence supports moving forward with the full redesign, as it is expected to generate meaningful sales growth.
+
+## Alternative Statement
+
+Even though the analysis suggests the redesign increases sales above the threshold, there is a possibility that the observed increase is due to confounding factors (e.g., differences in customer purchasing behavior, seasonality, promotions, or net promoter score), and the redesign may not truly increase sales.
